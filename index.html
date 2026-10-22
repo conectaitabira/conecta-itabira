@@ -59,12 +59,61 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   </main>
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
   <script>
-    function buscar() {
-      const termo = document.getElementById('busca').value.trim();
-      document.getElementById('resultado').textContent =
-        termo ? 'A busca por "' + termo + '" estará disponível em breve.' :
-        'Digite o serviço que você procura.';
-    }
+    
+async function buscar() {
+  const termo = document.getElementById('busca').value.trim();
+  const resultado = document.getElementById('resultado');
+
+  if (!termo) {
+    resultado.textContent = 'Digite o serviço que você procura.';
+    return;
+  }
+
+  resultado.textContent = 'Buscando profissionais...';
+
+  const { data, error } = await db
+    .from('professionals')
+    .select('profession, description, hourly_rate, availability')
+    .ilike('profession', '%' + termo + '%')
+    .limit(20);
+
+  if (error) {
+    console.error(error);
+    resultado.textContent = 'Não foi possível realizar a busca.';
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    resultado.textContent = 'Nenhum profissional encontrado.';
+    return;
+  }
+
+  resultado.replaceChildren();
+
+  data.forEach(profissional => {
+    const card = document.createElement('div');
+    card.style.cssText =
+      'padding:15px;margin-top:12px;background:#f0f7ff;border-radius:10px;';
+
+    const titulo = document.createElement('h3');
+    titulo.textContent = profissional.profession;
+
+    const descricao = document.createElement('p');
+    descricao.textContent = profissional.description || '';
+
+    const preco = document.createElement('p');
+    preco.textContent = profissional.hourly_rate == null
+      ? 'Valor a combinar'
+      : 'R$ ' + profissional.hourly_rate + ' por hora';
+
+    const horario = document.createElement('p');
+    horario.textContent = profissional.availability || '';
+
+    card.append(titulo, descricao, preco, horario);
+    resultado.appendChild(card);
+  });
+}
+
   </script>
 </body>
 </html>
