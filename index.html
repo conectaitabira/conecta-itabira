@@ -54,7 +54,23 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
     <section class="card">
       <h2>Você é profissional?</h2>
       <p>Em breve, você poderá criar seu perfil e receber pedidos de clientes da região.</p>
-      <button disabled style="opacity:.5">Cadastro em preparação</button>
+      
+<button onclick="document.getElementById('formCadastro').hidden = false">
+  Cadastrar como profissional
+</button>
+
+<div id="formCadastro" hidden>
+  <h3>Cadastro de profissional</h3>
+  <input id="nome" placeholder="Seu nome completo">
+  <input id="profissao" placeholder="Sua profissão">
+  <input id="telefone" placeholder="Telefone com DDD">
+  <input id="bairro" placeholder="Bairro em Itabira">
+  <input id="preco" type="number" placeholder="Valor por hora (R$)">
+  <button type="button" onclick="alert('Próxima etapa: conectar o cadastro ao Supabase')">
+    Enviar cadastro
+  </button>
+</div>
+  
     </section>
   </main>
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
