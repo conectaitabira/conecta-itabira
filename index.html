@@ -59,22 +59,87 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   Cadastrar como profissional
 </button>
 
+
 <div id="formCadastro" hidden>
   <h3>Cadastro de profissional</h3>
-  <input id="nome" placeholder="Seu nome completo">
+
+  <input id="nome" placeholder="Nome completo">
+  <input id="email" type="email" placeholder="Seu e-mail">
+  <input id="senha" type="password" placeholder="Crie uma senha" minlength="6">
   <input id="profissao" placeholder="Sua profissão">
-  <input id="telefone" placeholder="Telefone com DDD">
+  <input id="telefone" type="tel" placeholder="Telefone com DDD">
   <input id="bairro" placeholder="Bairro em Itabira">
-  <input id="preco" type="number" placeholder="Valor por hora (R$)">
-  <button type="button" onclick="alert('Próxima etapa: conectar o cadastro ao Supabase')">
-    Enviar cadastro
+  <input id="preco" type="number" min="0" placeholder="Valor por hora (R$)">
+
+  <button type="button" onclick="cadastrarProfissional()">
+    Criar minha conta
   </button>
+
+  <p id="mensagemCadastro" role="status"></p>
 </div>
+
   
     </section>
   </main>
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
   <script>
+    
+async function cadastrarProfissional() {
+  const campo = id => document.getElementById(id);
+  const mensagem = campo('mensagemCadastro');
+
+  const nome = campo('nome').value.trim();
+  const email = campo('email').value.trim();
+  const senha = campo('senha').value;
+  const profissao = campo('profissao').value.trim();
+  const telefone = campo('telefone').value.trim();
+  const bairro = campo('bairro').value.trim();
+  const precoTexto = campo('preco').value.trim();
+  const preco = Number(precoTexto);
+
+  if (!nome || !email || !senha || !profissao ||
+      !telefone || !bairro || !precoTexto ||
+      !Number.isFinite(preco) || preco < 0) {
+    mensagem.textContent = 'Preencha todos os campos corretamente.';
+    return;
+  }
+
+  if (senha.length < 6) {
+    mensagem.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+    return;
+  }
+
+  mensagem.textContent = 'Criando sua conta...';
+
+  try {
+    const { data, error } = await db.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        emailRedirectTo: window.location.origin +
+          window.location.pathname
+      }
+    });
+
+    if (error) throw error;
+
+    if (data.session) {
+      mensagem.textContent =
+        'Conta criada. Entre em contato com o suporte para concluir seu perfil profissional.';
+    } else {
+      mensagem.textContent =
+        'Verifique seu e-mail e confirme sua conta. Depois vamos concluir seu perfil profissional.';
+    }
+
+  } catch (erro) {
+    console.error(erro);
+    mensagem.textContent =
+      'Não foi possível criar a conta: ' + erro.message;
+  }
+}
+
+  
+
     
 async function buscar() {
   const termo = document.getElementById('busca').value.trim();
