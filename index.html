@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conecta Itabira</title>
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; background:#f3f7fb; color:#17324d; }
+    header { background:#0877c9; color:white; padding:24px; text-align:center; }
+    header h1 { margin:0 0 8px; }
+    main { max-width:850px; margin:auto; padding:24px; }
+    .card { background:white; padding:24px; border-radius:16px; margin-bottom:18px; box-shadow:0 2px 12px #0001; }
+    input,button { padding:13px; border-radius:8px; font-size:16px; box-sizing:border-box; }
+    input { width:100%; border:1px solid #ccd5df; margin:10px 0; }
+    button { border:0; background:#0877c9; color:white; cursor:pointer; }
+    .tag { display:inline-block; background:#e6f2ff; padding:9px 12px; margin:5px; border-radius:20px; }
+    footer { text-align:center; padding:20px; color:#667; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Conecta Itabira</h1>
+    <p>Conectando quem precisa com quem sabe fazer!</p>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Encontre um profissional em Itabira</h2>
+      <p>Eletricistas, pedreiros, diaristas, jardineiros e muito mais.</p>
+      <input id="busca" placeholder="Qual serviço você procura?">
+      <button onclick="buscar()">Buscar profissional</button>
+      <p id="resultado"></p>
+    </section>
+    <section class="card">
+      <h2>Serviços disponíveis</h2>
+      <span class="tag">⚡ Eletricista</span>
+      <span class="tag">🔨 Pedreiro</span>
+      <span class="tag">🧹 Diarista</span>
+      <span class="tag">🌿 Jardineiro</span>
+      <span class="tag">🔧 Encanador</span>
+    </section>
+    <section class="card">
+      <h2>Você é profissional?</h2>
+      <p>Em breve, você poderá criar seu perfil e receber pedidos de clientes da região.</p>
+      <button disabled style="opacity:.5">Cadastro em preparação</button>
+    </section>
+  </main>
+  <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
+  <script>
+    function buscar() {
+      const termo = document.getElementById('busca').value.trim();
+      document.getElementById('resultado').textContent =
+        termo ? 'A busca por "' + termo + '" estará disponível em breve.' :
+        'Digite o serviço que você procura.';
+    }
+  </script>
+</body>
+</html>
