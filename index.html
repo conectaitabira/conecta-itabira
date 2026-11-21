@@ -115,10 +115,20 @@ async function cadastrarProfissional() {
     const { data, error } = await db.auth.signUp({
       email,
       password: senha,
-      options: {
-        emailRedirectTo: window.location.origin +
-          window.location.pathname
-      }
+      
+options: {
+  emailRedirectTo: window.location.origin +
+    window.location.pathname,
+  data: {
+    full_name: nome,
+    phone: telefone,
+    city: 'Itabira',
+    profession: profissao,
+    neighborhood: bairro,
+    hourly_rate: preco
+  }
+}
+
     });
 
     if (error) throw error;
