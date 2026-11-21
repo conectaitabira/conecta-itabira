@@ -182,6 +182,44 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   <div id="listaJobs"></div>
 </section>
 
+<!-- PUBLICAÇÃO DE SERVIÇOS -->
+<section class="card" style="max-width:802px;margin:20px auto;">
+  <h2>Publique um serviço</h2>
+  <p>Precisa de um profissional? Anuncie seu trabalho gratuitamente.</p>
+
+  <input id="jobTitulo" placeholder="Título do serviço">
+
+  <input id="jobCategoria"
+    placeholder="Categoria: Pedreiro, Jardineiro...">
+
+  <input id="jobBairro" placeholder="Bairro em Itabira">
+
+  <textarea id="jobDescricao"
+    placeholder="Descreva o serviço que precisa"
+    style="width:100%;min-height:110px;padding:12px;box-sizing:border-box;">
+  </textarea>
+
+  <input id="jobOrcamento" type="number" min="0"
+    placeholder="Orçamento estimado (R$)">
+
+  <button type="button" onclick="publicarServico()">
+    Publicar serviço
+  </button>
+
+  <p id="mensagemJob" role="status"></p>
+</section>
+
+<!-- LISTA DE SERVIÇOS -->
+<section class="card" style="max-width:802px;margin:20px auto;">
+  <h2>Serviços disponíveis</h2>
+
+  <button type="button" onclick="listarServicos()">
+    Atualizar serviços
+  </button>
+
+  <div id="listaJobs"></div>
+</section>
+
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
   
 async function publicarServico() {
@@ -677,6 +715,119 @@ db.auth.getSession().then(({ data }) => {
     carregarMinhaConta();
   }
 });
+    
+async function publicarServico() {
+  const campo = id => document.getElementById(id);
+  const mensagem = campo('mensagemJob');
+
+  const titulo = campo('jobTitulo').value.trim();
+  const categoria = campo('jobCategoria').value.trim();
+  const bairro = campo('jobBairro').value.trim();
+  const descricao = campo('jobDescricao').value.trim();
+  const textoOrcamento = campo('jobOrcamento').value.trim();
+  const orcamento = textoOrcamento === ''
+    ? null : Number(textoOrcamento);
+
+  if (!titulo || !categoria || !descricao ||
+      (orcamento !== null &&
+      (!Number.isFinite(orcamento) || orcamento < 0))) {
+    mensagem.textContent = 'Preencha os dados corretamente.';
+    return;
+  }
+
+  mensagem.textContent = 'Publicando serviço...';
+
+  const { data: authData, error: authError } =
+    await db.auth.getUser();
+
+  if (authError || !authData?.user) {
+    mensagem.textContent =
+      'Faça login para publicar um serviço.';
+    return;
+  }
+
+  const { error } = await db.from('jobs').insert({
+    client_id: authData.user.id,
+    title: titulo,
+    category: categoria,
+    neighborhood: bairro,
+    description: descricao,
+    city: 'Itabira',
+    budget: orcamento
+  });
+
+  if (error) {
+    mensagem.textContent =
+      'Erro ao publicar: ' + error.message;
+    return;
+  }
+
+  mensagem.textContent = 'Serviço publicado com sucesso!';
+
+  ['jobTitulo', 'jobCategoria', 'jobBairro',
+   'jobDescricao', 'jobOrcamento'].forEach(id => {
+    campo(id).value = '';
+  });
+
+  await listarServicos();
+}
+
+async function listarServicos() {
+  const lista = document.getElementById('listaJobs');
+  lista.textContent = 'Carregando serviços...';
+
+  const { data, error } = await db
+    .from('jobs')
+    .select('title,category,description,neighborhood,city,budget')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  if (error) {
+    lista.textContent = 'Erro: ' + error.message;
+    return;
+  }
+
+  lista.replaceChildren();
+
+  if (!data?.length) {
+    lista.textContent = 'Nenhum serviço publicado ainda.';
+    return;
+  }
+
+  data.forEach(job => {
+    const card = document.createElement('div');
+    card.style.cssText =
+      'background:#f0f7ff;padding:15px;border-radius:10px;margin-top:12px;';
+
+    const titulo = document.createElement('h3');
+    titulo.textContent = job.title;
+
+    const categoria = document.createElement('p');
+    categoria.textContent = 'Categoria: ' + job.category;
+
+    const descricao = document.createElement('p');
+    descricao.textContent = job.description;
+
+    const local = document.createElement('p');
+    local.textContent =
+      'Local: ' + (job.neighborhood || 'Não informado') +
+      ', ' + job.city;
+
+    const preco = document.createElement('p');
+    preco.textContent = job.budget == null
+      ? 'Orçamento a combinar'
+      : 'Orçamento: ' + Number(job.budget).toLocaleString(
+          'pt-BR', { style: 'currency', currency: 'BRL' }
+        );
+
+    card.append(titulo, categoria, descricao, local, preco);
+    lista.appendChild(card);
+  });
+}
+
+listarServicos();
+
 </script>
 
 </body>
