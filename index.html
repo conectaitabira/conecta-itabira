@@ -53,6 +53,29 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
     </section>
     <section class="card">
       <h2>Você é profissional?</h2>
+      
+<div id="areaLogin">
+  <h3>Já tem uma conta? Entre aqui</h3>
+
+  <input
+    id="emailLogin"
+    type="email"
+    placeholder="Seu e-mail"
+  >
+
+  <input
+    id="senhaLogin"
+    type="password"
+    placeholder="Sua senha"
+  >
+
+  <button type="button" onclick="entrarProfissional()">
+    Entrar na minha conta
+  </button>
+
+  <p id="mensagemLogin" role="status"></p>
+</div>
+
       <p>Em breve, você poderá criar seu perfil e receber pedidos de clientes da região.</p>
       
 <button onclick="document.getElementById('formCadastro').hidden = false">
@@ -83,7 +106,35 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   </main>
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
   <script>
-    
+   
+async function entrarProfissional() {
+  const email = document.getElementById('emailLogin').value.trim();
+  const senha = document.getElementById('senhaLogin').value;
+  const mensagem = document.getElementById('mensagemLogin');
+
+  if (!email || !senha) {
+    mensagem.textContent = 'Informe seu e-mail e senha.';
+    return;
+  }
+
+  mensagem.textContent = 'Entrando...';
+
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password: senha
+    });
+
+    if (error) throw error;
+
+    mensagem.textContent =
+      'Login realizado! Bem-vindo ao Conecta Itabira.';
+  } catch (erro) {
+    mensagem.textContent =
+      'Não foi possível entrar: ' + erro.message;
+  }
+}
+ 
 async function cadastrarProfissional() {
   const campo = id => document.getElementById(id);
   const mensagem = campo('mensagemCadastro');
