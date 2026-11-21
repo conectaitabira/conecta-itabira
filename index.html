@@ -125,6 +125,31 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   
     </section>
   </main>
+  
+<section id="minhaConta" class="card" hidden
+  style="max-width:802px;margin:20px auto;">
+
+  <h2>Minha Conta - Conecta Itabira</h2>
+  <p id="usuarioLogado"></p>
+
+  <input id="contaNome" placeholder="Nome completo">
+  <input id="contaTelefone" placeholder="Telefone">
+  <input id="contaCidade" placeholder="Cidade">
+  <input id="contaProfissao" placeholder="Profissão">
+  <input id="contaBairro" placeholder="Bairro">
+  <input id="contaPreco" type="number" min="0"
+    placeholder="Valor por hora (R$)">
+
+  <button type="button" onclick="salvarMinhaConta()">
+    Salvar alterações
+  </button>
+
+  <button type="button" onclick="sairDaConta()">
+    Sair da conta
+  </button>
+
+  <p id="mensagemMinhaConta" role="status"></p>
+</section>
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
   <script>
  
@@ -179,6 +204,175 @@ db.auth.onAuthStateChange((event) => {
     document.getElementById('novaSenhaArea').scrollIntoView();
   }
 });
+
+let profissionalAtualId = null;
+
+async function carregarMinhaConta() {
+  const { data: authData } = await db.auth.getUser();
+  const usuario = authData?.user;
+  const area = document.getElementById('minhaConta');
+
+  if (!usuario) {
+    area.hidden = true;
+    return;
+  }
+
+  area.hidden = false;
+  document.getElementById('usuarioLogado').textContent =
+    'Conectado como: ' + usuario.email;
+
+  const { data: perfil, error: erroPerfil } = await db
+    .from('profiles')
+    .select('full_name, phone, city')
+    .eq('id', usuario.id)
+    .maybeSingle();
+
+  if (erroPerfil) {
+    document.getElementById('mensagemMinhaConta').textContent =
+      erroPerfil.message;
+    return;
+  }
+
+  document.getElementById('contaNome').value =
+    perfil?.full_name || '';
+  document.getElementById('contaTelefone').value =
+    perfil?.phone || '';
+  document.getElementById('contaCidade').value =
+    perfil?.city || 'Itabira';
+
+  const { data: profissionais, error: erroProf } = await db
+    .from('professionals')
+    .select('id, profession, description, hourly_rate')
+    .eq('profile_id', usuario.id)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (erroProf) {
+    document.getElementById('mensagemMinhaConta').textContent =
+      erroProf.message;
+    return;
+  }
+
+  const profissional = profissionais?.[0];
+  profissionalAtualId = profissional?.id || null;
+
+  document.getElementById('contaProfissao').value =
+    profissional?.profession || '';
+  document.getElementById('contaPreco').value =
+    profissional?.hourly_rate ?? '';
+
+  const descricao = profissional?.description || '';
+  const bairro = descricao.match(/Bairro:\s*(.*)$/i);
+  document.getElementById('contaBairro').value =
+    bairro ? bairro[1].trim() : '';
+}
+
+async function salvarMinhaConta() {
+  const mensagem =
+    document.getElementById('mensagemMinhaConta');
+
+  const { data: authData, error: erroAuth } =
+    await db.auth.getUser();
+
+  if (erroAuth || !authData?.user) {
+    mensagem.textContent = 'Faça login novamente.';
+    return;
+  }
+
+  const usuario = authData.user;
+  const valor = id =>
+    document.getElementById(id).value.trim();
+
+  const nome = valor('contaNome');
+  const telefone = valor('contaTelefone');
+  const cidade = valor('contaCidade');
+  const profissao = valor('contaProfissao');
+  const bairro = valor('contaBairro');
+  const precoTexto = valor('contaPreco');
+  const preco = Number(precoTexto);
+
+  if (!nome || !telefone || !cidade ||
+      !profissao || !precoTexto ||
+      !Number.isFinite(preco) || preco < 0) {
+    mensagem.textContent =
+      'Preencha os campos obrigatórios corretamente.';
+    return;
+  }
+
+  mensagem.textContent = 'Salvando alterações...';
+
+  const { error: erroPerfil } = await db
+    .from('profiles')
+    .upsert({
+      id: usuario.id,
+      full_name: nome,
+      phone: telefone,
+      city: cidade
+    }, { onConflict: 'id' });
+
+  if (erroPerfil) {
+    mensagem.textContent = 'Erro no perfil: ' +
+      erroPerfil.message;
+    return;
+  }
+
+  const dadosProfissionais = {
+    profession: profissao,
+    description: profissao + ' - Bairro: ' + bairro,
+    hourly_rate: preco
+  };
+
+  let erroProf;
+
+  if (profissionalAtualId) {
+    const resultado = await db
+      .from('professionals')
+      .update(dadosProfissionais)
+      .eq('id', profissionalAtualId)
+      .eq('profile_id', usuario.id);
+
+    erroProf = resultado.error;
+  } else {
+    const resultado = await db
+      .from('professionals')
+      .insert({
+        ...dadosProfissionais,
+        profile_id: usuario.id
+      })
+      .select('id')
+      .single();
+
+    erroProf = resultado.error;
+
+    if (!erroProf) {
+      profissionalAtualId = resultado.data.id;
+    }
+  }
+
+  if (erroProf) {
+    mensagem.textContent =
+      'Erro ao salvar profissão: ' + erroProf.message;
+    return;
+  }
+
+  mensagem.textContent = 'Dados salvos com sucesso!';
+  await carregarMinhaConta();
+}
+
+async function sairDaConta() {
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    document.getElementById('mensagemMinhaConta')
+      .textContent = error.message;
+    return;
+  }
+
+  profissionalAtualId = null;
+  document.getElementById('minhaConta').hidden = true;
+  document.getElementById('mensagemLogin').textContent =
+    'Você saiu da sua conta.';
+}
   
 async function entrarProfissional() {
   const email = document.getElementById('emailLogin').value.trim();
@@ -329,6 +523,10 @@ async function buscar() {
   });
 }
 
-  </script>
+ db.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    carregarMinhaConta();
+  }
+}); </script>
 </body>
 </html>
