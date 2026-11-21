@@ -74,6 +74,27 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   </button>
 
   <p id="mensagemLogin" role="status"></p>
+  
+<p>
+  <button type="button" onclick="recuperarSenha()">
+    Esqueci minha senha
+  </button>
+</p>
+
+<div id="novaSenhaArea" hidden>
+  <h3>Definir nova senha</h3>
+  <input
+    id="novaSenha"
+    type="password"
+    minlength="6"
+    placeholder="Digite sua nova senha"
+  >
+  <button type="button" onclick="salvarNovaSenha()">
+    Salvar nova senha
+  </button>
+  <p id="mensagemNovaSenha" role="status"></p>
+</div>
+
 </div>
 
       <p>Em breve, você poderá criar seu perfil e receber pedidos de clientes da região.</p>
@@ -106,7 +127,59 @@ const SUPABASE_KEY = 'sb_publishable_2GkRAw1ZpJvXJvwZdbeuGA_znj3eHXa';
   </main>
   <footer>© 2026 Conecta Itabira — Minas Gerais, Brasil</footer>
   <script>
-   
+ 
+async function recuperarSenha() {
+  const email = document.getElementById('emailLogin').value.trim();
+  const mensagem = document.getElementById('mensagemLogin');
+
+  if (!email) {
+    mensagem.textContent = 'Digite seu e-mail primeiro.';
+    return;
+  }
+
+  mensagem.textContent = 'Enviando e-mail de recuperação...';
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    mensagem.textContent = 'Erro: ' + error.message;
+  } else {
+    mensagem.textContent =
+      'Se este e-mail estiver cadastrado, você receberá um link para redefinir sua senha.';
+  }
+}
+
+async function salvarNovaSenha() {
+  const senha = document.getElementById('novaSenha').value;
+  const mensagem = document.getElementById('mensagemNovaSenha');
+
+  if (senha.length < 6) {
+    mensagem.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({
+    password: senha
+  });
+
+  if (error) {
+    mensagem.textContent = 'Erro: ' + error.message;
+  } else {
+    mensagem.textContent =
+      'Senha atualizada! Agora você pode entrar na sua conta.';
+    document.getElementById('novaSenhaArea').hidden = true;
+  }
+}
+
+db.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('novaSenhaArea').hidden = false;
+    document.getElementById('novaSenhaArea').scrollIntoView();
+  }
+});
+  
 async function entrarProfissional() {
   const email = document.getElementById('emailLogin').value.trim();
   const senha = document.getElementById('senhaLogin').value;
