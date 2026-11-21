@@ -133,14 +133,14 @@ options: {
 
     if (error) throw error;
 
-    if (data.session) {
-      mensagem.textContent =
-        'Conta criada. Entre em contato com o suporte para concluir seu perfil profissional.';
-    } else {
-      mensagem.textContent =
-        'Verifique seu e-mail e confirme sua conta. Depois vamos concluir seu perfil profissional.';
-    }
-
+   
+    if (data.user) {
+  mensagem.textContent = data.session
+    ? 'Conta criada! Seu perfil profissional está sendo preparado.'
+    : 'Verifique seu e-mail e confirme sua conta. Depois faça login.';
+} else {
+  mensagem.textContent = 'Verifique seu e-mail para continuar.';
+}
   } catch (erro) {
     console.error(erro);
     mensagem.textContent =
