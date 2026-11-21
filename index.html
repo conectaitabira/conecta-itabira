@@ -375,7 +375,7 @@ async function sairDaConta() {
 }
   
 async function entrarProfissional() {
-  const email = document.getElementById('emailLogin').value.trim();
+    const email = document.getElementById('emailLogin').value.trim();
   const senha = document.getElementById('senhaLogin').value;
   const mensagem = document.getElementById('mensagemLogin');
 
@@ -396,6 +396,7 @@ async function entrarProfissional() {
 
     mensagem.textContent =
       'Login realizado! Bem-vindo ao Conecta Itabira.';
+    await carregarMinhaConta();
   } catch (erro) {
     mensagem.textContent =
       'Não foi possível entrar: ' + erro.message;
@@ -523,10 +524,13 @@ async function buscar() {
   });
 }
 
- db.auth.getSession().then(({ data }) => {
+ 
+db.auth.getSession().then(({ data }) => {
   if (data.session) {
     carregarMinhaConta();
   }
-}); </script>
+});
+</script>
+
 </body>
 </html>
